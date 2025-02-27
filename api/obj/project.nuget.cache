@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "kbEJPpxkw90=",
+  "success": true,
+  "projectFilePath": "/home/xavi-13/Escritorio/OLC2_Proyecto1_202300596/api/api.csproj",
+  "expectedPackageFiles": [
+    "/home/xavi-13/.nuget/packages/antlr4.runtime.standard/4.13.1/antlr4.runtime.standard.4.13.1.nupkg.sha512",
+    "/home/xavi-13/.nuget/packages/microsoft.aspnetcore.openapi/9.0.1/microsoft.aspnetcore.openapi.9.0.1.nupkg.sha512",
+    "/home/xavi-13/.nuget/packages/microsoft.openapi/1.6.17/microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
