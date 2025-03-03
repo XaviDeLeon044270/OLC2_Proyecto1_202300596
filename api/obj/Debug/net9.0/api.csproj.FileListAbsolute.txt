@@ -32,3 +32,4 @@
 /home/xavi-13/Escritorio/OLC2_Proyecto1_202300596/api/obj/Debug/net9.0/api.genruntimeconfig.cache
 /home/xavi-13/Escritorio/OLC2_Proyecto1_202300596/api/obj/Debug/net9.0/ref/api.dll
 /home/xavi-13/Escritorio/OLC2_Proyecto1_202300596/api/bin/Debug/net9.0/Antlr4.Runtime.Standard.dll
+/home/xavi-13/Escritorio/OLC2_Proyecto1_202300596/api/obj/Debug/net9.0/api.sourcelink.json

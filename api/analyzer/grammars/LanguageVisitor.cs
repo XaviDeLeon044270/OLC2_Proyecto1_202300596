@@ -33,32 +33,72 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.program"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitProgram([NotNull] LanguageParser.ProgramContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.stmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStmt([NotNull] LanguageParser.StmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Declaration</c>
+	/// labeled alternative in <see cref="LanguageParser.dcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDeclaration([NotNull] LanguageParser.DeclarationContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Identifier</c>
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIdentifier([NotNull] LanguageParser.IdentifierContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Number</c>
-	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitNumber([NotNull] LanguageParser.NumberContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>MulDiv</c>
-	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitMulDiv([NotNull] LanguageParser.MulDivContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>AddSub</c>
-	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitAddSub([NotNull] LanguageParser.AddSubContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>Parens</c>
-	/// labeled alternative in <see cref="LanguageParser.expr"/>.
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitParens([NotNull] LanguageParser.ParensContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Negate</c>
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNegate([NotNull] LanguageParser.NegateContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Print</c>
+	/// labeled alternative in <see cref="LanguageParser.printStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPrint([NotNull] LanguageParser.PrintContext context);
 }
 } // namespace analyzer

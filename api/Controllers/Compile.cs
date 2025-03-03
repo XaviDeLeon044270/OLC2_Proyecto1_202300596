@@ -22,17 +22,6 @@ namespace api.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View("Error!");
-        }
-
         public class CompileRequest
         {
             [Required]
@@ -44,7 +33,7 @@ namespace api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { error = "Invalid request" });
             }
 
             _logger.LogInformation("Compiling code: {0}", request.Code);
@@ -53,12 +42,12 @@ namespace api.Controllers
             var lexer = new LanguageLexer(inputStream);
             var tokenStream = new CommonTokenStream(lexer);
             var parser = new LanguageParser(tokenStream);
-            var tree = parser.expr();
+            var tree = parser.program();
 
             var visitor = new CompilerVisitor();
-            var result = visitor.Visit(tree);
+            visitor.Visit(tree);
 
-            return Ok(result);
+            return Ok(new { result = visitor.output });
         }
 
     }
