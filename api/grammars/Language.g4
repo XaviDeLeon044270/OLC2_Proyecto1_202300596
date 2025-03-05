@@ -4,7 +4,7 @@ grammar Language;
 program: stmt*;
 
 stmt: expressionStmt ';'
-    | dcl ';'
+    | variableDcl ';'
     //| assignment ';' #Assignment
     | printStmt ';'
     //| ifStatement #IfStatement
@@ -14,19 +14,28 @@ stmt: expressionStmt ';'
 
 
 
-dcl: 'var' ID ( '=' expressionStmt )? #Declaration;
+variableDcl: 'var' ID ( '=' expressionStmt )? #variableDeclaration;
 
 expressionStmt: 
-    '-' expressionStmt                              # Negate
-    | expressionStmt ( '*' | '/' ) expressionStmt   # MulDiv
-    | expressionStmt ( '+' | '-' ) expressionStmt   # AddSub
-    | INT                                           # Number
-    | ID                                            # Identifier
-    | '(' expressionStmt ')'                        # Parens
+    '-' expressionStmt                                          # Negate
+    | expressionStmt ( '*' | '/' ) expressionStmt               # MulDiv
+    | expressionStmt ( '+' | '-' ) expressionStmt               # AddSub
+    | expressionStmt ( '>' | '<' | '>=' | '<=' ) expressionStmt # GreaterLess
+    | expressionStmt ( '==' | '!=' ) expressionStmt             # Equal
+    | ID '=' expressionStmt                                     # Assignment
+    | INTEGER                                                   # Integer
+    | BOOLEAN                                                   # Boolean
+    | FLOAT                                                     # Float
+    | STRING                                                    # String
+    | ID                                                        # Identifier
+    | '(' expressionStmt ')'                                    # Parens
 ;
 
 printStmt: 'print(' expressionStmt ')' #Print;
 
-INT: [0-9]+;
+INTEGER: [0-9]+;
+BOOLEAN: 'true' | 'false';
+FLOAT: [0-9]+ '.' [0-9]+;
+STRING: '"' ~'"'* '"';
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 WS: [ \t\r\n]+ -> skip;

@@ -45,12 +45,33 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStmt([NotNull] LanguageParser.StmtContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>Declaration</c>
-	/// labeled alternative in <see cref="LanguageParser.dcl"/>.
+	/// Visit a parse tree produced by the <c>variableDeclaration</c>
+	/// labeled alternative in <see cref="LanguageParser.variableDcl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitDeclaration([NotNull] LanguageParser.DeclarationContext context);
+	Result VisitVariableDeclaration([NotNull] LanguageParser.VariableDeclarationContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Assignment</c>
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAssignment([NotNull] LanguageParser.AssignmentContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Integer</c>
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInteger([NotNull] LanguageParser.IntegerContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Float</c>
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFloat([NotNull] LanguageParser.FloatContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>Identifier</c>
 	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
@@ -58,13 +79,6 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitIdentifier([NotNull] LanguageParser.IdentifierContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>Number</c>
-	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitNumber([NotNull] LanguageParser.NumberContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>MulDiv</c>
 	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
@@ -80,6 +94,13 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitAddSub([NotNull] LanguageParser.AddSubContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>Equal</c>
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitEqual([NotNull] LanguageParser.EqualContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Parens</c>
 	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
 	/// </summary>
@@ -87,12 +108,33 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitParens([NotNull] LanguageParser.ParensContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>GreaterLess</c>
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitGreaterLess([NotNull] LanguageParser.GreaterLessContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Negate</c>
 	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitNegate([NotNull] LanguageParser.NegateContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>String</c>
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitString([NotNull] LanguageParser.StringContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Boolean</c>
+	/// labeled alternative in <see cref="LanguageParser.expressionStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBoolean([NotNull] LanguageParser.BooleanContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>Print</c>
 	/// labeled alternative in <see cref="LanguageParser.printStmt"/>.

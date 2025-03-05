@@ -1,74 +1,155 @@
 using analyzer;
 using Antlr4.Runtime.Misc;
 
-class CompilerVisitor : LanguageBaseVisitor<int>
+class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
 {
 
+    private ValueWrapper defaultValue = new VoidValue();
     public string output = "";
     private Environment actualEnvironment = new Environment();
 
-    public override int VisitProgram(LanguageParser.ProgramContext context)
+    public override ValueWrapper VisitProgram(LanguageParser.ProgramContext context)
     {
         foreach (var stmt in context.stmt())
         {
             Visit(stmt);
         }
 
-        return 0;
+        return defaultValue;
     }
 
-    public override int VisitDeclaration(LanguageParser.DeclarationContext context)
+    public override ValueWrapper VisitVariableDeclaration(LanguageParser.VariableDeclarationContext context)
     {
         string id = context.ID().GetText();
-        int value = Visit(context.expressionStmt());
+        ValueWrapper value = Visit(context.expressionStmt());
 
         actualEnvironment.SetVariable(id, value);
 
-        return value;
+        return defaultValue;
     }
 
-    public override int VisitPrint(LanguageParser.PrintContext context)
+    public override ValueWrapper VisitPrint(LanguageParser.PrintContext context)
     {
-        int value = Visit(context.expressionStmt());
+        ValueWrapper value = Visit(context.expressionStmt());
         output += value + "\n";
-        return 0;
+        return defaultValue;
     }
 
-    public override int VisitIdentifier(LanguageParser.IdentifierContext context)
+    public override ValueWrapper VisitIdentifier(LanguageParser.IdentifierContext context)
     {
         string id = context.ID().GetText();
 
         return actualEnvironment.GetVariable(id);
     }
 
-    public override int VisitAddSub(LanguageParser.AddSubContext context)
+    public override ValueWrapper VisitAddSub(LanguageParser.AddSubContext context)
     {
-        int left = Visit(context.expressionStmt(0));
-        int right = Visit(context.expressionStmt(1));
+        ValueWrapper left = Visit(context.expressionStmt(0));
+        ValueWrapper right = Visit(context.expressionStmt(1));
+        var op = context.GetChild(1).GetText();
+
+        return (left, right, op) switch
+        {
+            (IntValue l, IntValue r, "+") => new IntValue(l.Value + r.Value),
+            (IntValue l, IntValue r, "-") => new IntValue(l.Value - r.Value),
+            (FloatValue l, FloatValue r, "+") => new FloatValue(l.Value + r.Value),
+            (FloatValue l, FloatValue r, "-") => new FloatValue(l.Value - r.Value),
+            _ => throw new System.Exception("Invalid operation")
+        };
+    }
+
+    public override ValueWrapper VisitMulDiv(LanguageParser.MulDivContext context)
+    {
+        ValueWrapper left = Visit(context.expressionStmt(0));
+        ValueWrapper right = Visit(context.expressionStmt(1));
+        var op = context.GetChild(1).GetText();
+
+        return (left, right, op) switch
+        {
+            (IntValue l, IntValue r, "+") => new IntValue(l.Value + r.Value),
+            (IntValue l, IntValue r, "-") => new IntValue(l.Value - r.Value),
+            (IntValue l, IntValue r, "*") => new IntValue(l.Value * r.Value),
+            (IntValue l, IntValue r, "/") => new IntValue(l.Value / r.Value),
+            (FloatValue l, FloatValue r, "+") => new FloatValue(l.Value + r.Value),
+            (FloatValue l, FloatValue r, "-") => new FloatValue(l.Value - r.Value),
+            (FloatValue l, FloatValue r, "*") => new FloatValue(l.Value * r.Value),
+            (FloatValue l, FloatValue r, "/") => new FloatValue(l.Value / r.Value),
+            _ => throw new System.Exception("Invalid operation")
+        };
         
-        return context.GetChild(1).GetText() == "+" ? left + right : left - right;
     }
 
-    public override int VisitMulDiv(LanguageParser.MulDivContext context)
+    public override ValueWrapper VisitGreaterLess(LanguageParser.GreaterLessContext context)
     {
-        int left = Visit(context.expressionStmt(0));
-        int right = Visit(context.expressionStmt(1));
-        
-        return context.GetChild(1).GetText() == "*" ? left * right : left / right;
+        ValueWrapper left = Visit(context.expressionStmt(0));
+        ValueWrapper right = Visit(context.expressionStmt(1));
+        var op = context.GetChild(1).GetText();
+
+        return (left, right, op) switch
+        {
+            (IntValue l, IntValue r, "<") => new BoolValue(l.Value < r.Value),
+            (IntValue l, IntValue r, ">") => new BoolValue(l.Value > r.Value),
+            (IntValue l, IntValue r, "<=") => new BoolValue(l.Value <= r.Value),
+            (IntValue l, IntValue r, ">=") => new BoolValue(l.Value >= r.Value),
+            (IntValue l, IntValue r, "==") => new BoolValue(l.Value == r.Value),
+            (IntValue l, IntValue r, "!=") => new BoolValue(l.Value != r.Value),
+            (FloatValue l, FloatValue r, "<") => new BoolValue(l.Value < r.Value),
+            (FloatValue l, FloatValue r, ">") => new BoolValue(l.Value > r.Value),
+            (FloatValue l, FloatValue r, "<=") => new BoolValue(l.Value <= r.Value),
+            (FloatValue l, FloatValue r, ">=") => new BoolValue(l.Value >= r.Value),
+            (FloatValue l, FloatValue r, "==") => new BoolValue(l.Value == r.Value),
+            (FloatValue l, FloatValue r, "!=") => new BoolValue(l.Value != r.Value),
+            _ => throw new System.Exception("Invalid operation")
+        };
     }
 
-    public override int VisitNumber(LanguageParser.NumberContext context)
+    public override ValueWrapper VisitEqual (LanguageParser.EqualContext context)
     {
-        return int.Parse(context.INT().GetText());
+        ValueWrapper left = Visit(context.expressionStmt(0));
+        ValueWrapper right = Visit(context.expressionStmt(1));
+        var op = context.GetChild(1).GetText();
+
+        return (left, right, op) switch
+        {
+            (IntValue l, IntValue r, "==") => new BoolValue(l.Value == r.Value),
+            (IntValue l, IntValue r, "!=") => new BoolValue(l.Value != r.Value),
+            (FloatValue l, FloatValue r, "==") => new BoolValue(l.Value == r.Value),
+            (FloatValue l, FloatValue r, "!=") => new BoolValue(l.Value != r.Value),
+            (BoolValue l, BoolValue r, "==") => new BoolValue(l.Value == r.Value),
+            (BoolValue l, BoolValue r, "!=") => new BoolValue(l.Value != r.Value),
+            (StringValue l, StringValue r, "==") => new BoolValue(l.Value == r.Value),
+            (StringValue l, StringValue r, "!=") => new BoolValue(l.Value != r.Value),
+            _ => throw new System.Exception("Invalid operation")
+        };
     }
 
-    public override int VisitParens(LanguageParser.ParensContext context)
+    public override ValueWrapper VisitInteger(LanguageParser.IntegerContext context)
+    {
+        return new IntValue(int.Parse(context.INTEGER().GetText()));
+    }
+
+    public override ValueWrapper VisitParens(LanguageParser.ParensContext context)
     {
         return Visit(context.expressionStmt());
     }
 
-    public override int VisitNegate(LanguageParser.NegateContext context)
+    public override ValueWrapper VisitNegate(LanguageParser.NegateContext context)
     {
         return -Visit(context.expressionStmt());
+    }
+
+    public override ValueWrapper VisitFloat(LanguageParser.FloatContext context)
+    {
+        return new FloatValue(float.Parse(context.FLOAT().GetText()));
+    }
+
+    public override ValueWrapper VisitBoolean(LanguageParser.BooleanContext context)
+    {
+        return new BoolValue(bool.Parse(context.BOOLEAN().GetText()));
+    }
+
+    public override ValueWrapper VisitString(LanguageParser.StringContext context)
+    {
+        return new StringValue(context.STRING().GetText());
     }
 }
