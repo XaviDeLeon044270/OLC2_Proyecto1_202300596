@@ -45,8 +45,35 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStmt([NotNull] LanguageParser.StmtContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.nonDcl"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNonDcl([NotNull] LanguageParser.NonDclContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Block</c>
+	/// labeled alternative in <see cref="LanguageParser.blockStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBlock([NotNull] LanguageParser.BlockContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>IfStmt</c>
+	/// labeled alternative in <see cref="LanguageParser.ifStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIfStmt([NotNull] LanguageParser.IfStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>WhileStmt</c>
+	/// labeled alternative in <see cref="LanguageParser.whileStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitWhileStmt([NotNull] LanguageParser.WhileStmtContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>variableDeclaration</c>
-	/// labeled alternative in <see cref="LanguageParser.variableDcl"/>.
+	/// labeled alternative in <see cref="LanguageParser.varDcl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>

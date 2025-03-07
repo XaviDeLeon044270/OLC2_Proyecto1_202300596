@@ -6,7 +6,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
 
     private ValueWrapper defaultValue = new VoidValue();
     public string output = "";
-    private Environment actualEnvironment = new Environment();
+    private Environment actualEnvironment = new Environment(null);
 
     public override ValueWrapper VisitProgram(LanguageParser.ProgramContext context)
     {
@@ -23,15 +23,32 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         string id = context.ID().GetText();
         ValueWrapper value = Visit(context.expressionStmt());
 
-        actualEnvironment.SetVariable(id, value);
+        actualEnvironment.DeclareVariable(id, value);
 
         return defaultValue;
+    }
+
+    public override ValueWrapper VisitAssignment(LanguageParser.AssignmentContext context)
+    {
+        string id = context.ID().GetText();
+        ValueWrapper value = Visit(context.expressionStmt());
+
+        return actualEnvironment.AssignVariable(id, value);
+
     }
 
     public override ValueWrapper VisitPrint(LanguageParser.PrintContext context)
     {
         ValueWrapper value = Visit(context.expressionStmt());
-        output += value + "\n";
+        output += value switch
+        {
+            IntValue i => i.Value.ToString(),
+            FloatValue f => f.Value.ToString(),
+            BoolValue b => b.Value.ToString(),
+            StringValue s => s.Value.Replace("\"", ""),
+            VoidValue v => "void",
+            _ => throw new Exception("Invalid value")
+        } + "\n";
         return defaultValue;
     }
 
@@ -54,7 +71,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             (IntValue l, IntValue r, "-") => new IntValue(l.Value - r.Value),
             (FloatValue l, FloatValue r, "+") => new FloatValue(l.Value + r.Value),
             (FloatValue l, FloatValue r, "-") => new FloatValue(l.Value - r.Value),
-            _ => throw new System.Exception("Invalid operation")
+            _ => throw new Exception("Invalid operation")
         };
     }
 
@@ -74,7 +91,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             (FloatValue l, FloatValue r, "-") => new FloatValue(l.Value - r.Value),
             (FloatValue l, FloatValue r, "*") => new FloatValue(l.Value * r.Value),
             (FloatValue l, FloatValue r, "/") => new FloatValue(l.Value / r.Value),
-            _ => throw new System.Exception("Invalid operation")
+            _ => throw new Exception("Invalid operation")
         };
         
     }
@@ -99,7 +116,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             (FloatValue l, FloatValue r, ">=") => new BoolValue(l.Value >= r.Value),
             (FloatValue l, FloatValue r, "==") => new BoolValue(l.Value == r.Value),
             (FloatValue l, FloatValue r, "!=") => new BoolValue(l.Value != r.Value),
-            _ => throw new System.Exception("Invalid operation")
+            _ => throw new Exception("Invalid operation")
         };
     }
 
@@ -119,7 +136,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             (BoolValue l, BoolValue r, "!=") => new BoolValue(l.Value != r.Value),
             (StringValue l, StringValue r, "==") => new BoolValue(l.Value == r.Value),
             (StringValue l, StringValue r, "!=") => new BoolValue(l.Value != r.Value),
-            _ => throw new System.Exception("Invalid operation")
+            _ => throw new Exception("Invalid operation")
         };
     }
 
@@ -135,7 +152,13 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
 
     public override ValueWrapper VisitNegate(LanguageParser.NegateContext context)
     {
-        return -Visit(context.expressionStmt());
+        ValueWrapper value = Visit(context.expressionStmt());
+        return value switch
+        {
+            IntValue i => new IntValue(-i.Value),
+            FloatValue f => new FloatValue(-f.Value),
+            _ => throw new Exception("Invalid operation")
+        };
     }
 
     public override ValueWrapper VisitFloat(LanguageParser.FloatContext context)
@@ -152,4 +175,59 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
     {
         return new StringValue(context.STRING().GetText());
     }
+
+    public override ValueWrapper VisitBlock(LanguageParser.BlockContext context)
+    {
+        Environment oldEnvironment = actualEnvironment; 
+        actualEnvironment = new Environment(oldEnvironment);
+
+        foreach (var stmt in context.stmt())
+        {
+            Visit(stmt);
+        }
+
+        actualEnvironment = oldEnvironment;
+
+        return defaultValue;
+    } 
+
+    public override ValueWrapper VisitIfStmt(LanguageParser.IfStmtContext context)
+    {
+        ValueWrapper condition = Visit(context.expressionStmt());
+        
+        if (condition is not BoolValue)
+        {
+            throw new Exception("Invalid condition");
+        }
+
+        if ((condition as BoolValue).Value)
+        {
+            Visit(context.nonDcl(0));
+        }
+        else if (context.nonDcl().Length > 1)
+        {
+            Visit(context.nonDcl(1));
+        }
+
+        return defaultValue;
+    }
+
+    public override ValueWrapper VisitWhileStmt(LanguageParser.WhileStmtContext context)
+    {
+        ValueWrapper condition = Visit(context.expressionStmt());
+        
+        if (condition is not BoolValue)
+        {
+            throw new Exception("Invalid condition");
+        }
+
+        while ((condition as BoolValue).Value)
+        {
+            Visit(context.nonDcl());
+            condition = Visit(context.expressionStmt());
+        }
+
+        return defaultValue;
+    }
+
 }

@@ -3,18 +3,25 @@ grammar Language;
 
 program: stmt*;
 
-stmt: expressionStmt ';'
-    | variableDcl ';'
-    //| assignment ';' #Assignment
+stmt: nonDcl
+    | varDcl ';'
+;
+
+nonDcl: expressionStmt ';'
     | printStmt ';'
-    //| ifStatement #IfStatement
-    //| whileStatement #WhileStatement
+    | blockStmt
+    | ifStatement 
+    | whileStatement
     //| forStatement #ForStatement
 ;
 
+blockStmt: '{' stmt* '}' #Block;
 
+ifStatement: 'if' '(' expressionStmt ')' nonDcl ('else' nonDcl)? #IfStmt;
 
-variableDcl: 'var' ID ( '=' expressionStmt )? #variableDeclaration;
+whileStatement: 'while' '(' expressionStmt ')' nonDcl #WhileStmt;
+
+varDcl: 'var' ID ( '=' expressionStmt )? #variableDeclaration;
 
 expressionStmt: 
     '-' expressionStmt                                          # Negate
@@ -38,4 +45,7 @@ BOOLEAN: 'true' | 'false';
 FLOAT: [0-9]+ '.' [0-9]+;
 STRING: '"' ~'"'* '"';
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
-WS: [ \t\r\n]+ -> skip;
+
+ONELINECOMMENT: '//' ~[\r\n]* -> skip;
+MULTILINECOMMENT: '/*' .*? '*/' -> skip;
+WHITESPACES: [ \t\r\n]+ -> skip;
