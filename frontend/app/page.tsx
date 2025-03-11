@@ -1,39 +1,36 @@
 'use client';
 import { Editor } from '@monaco-editor/react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 const API_URL = 'http://localhost:5065';
 
 export default function Home() {
   const [code, setCode] = useState<string>('');
   const [output, setOutput] = useState<string>('');
-  const [isFileMenuOpen, setIsFileMenuOpen] = useState<boolean>(false);
-  const [isReportMenuOpen, setIsReportMenuOpen] = useState<boolean>(false);
-  const fileMenuRef = useRef<HTMLDivElement>(null);
-  const reportMenuRef = useRef<HTMLDivElement>(null);
-
-  // Evita el error de hidratación asegurando que el código solo se ejecute en el cliente
-  const [isClient, setIsClient] = useState<boolean>(false);
-
-  useEffect(() => {
-    setIsClient(true); // Marca que el componente se está ejecutando en el cliente
-  }, []);
 
   const handleExecute = () => {
-    fetch(`${API_URL}/compile`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ code })
-    })
-      .then(response => response.json())
-      .then(data => {
-        setOutput(data.result);
+    try {
+      fetch(`${API_URL}/compile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code })
       })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+        .then(response => {
+          if (!response.ok)
+            return response.text().then(text => { throw new Error(text) });
+          return response.json();
+        })
+        .then(data => setOutput(data.result))
+        .catch(err => {
+          const formattedMessage = err.message.replace(/[{}"]/g, '').replace(/^error:/i, 'Error:\t');
+          setOutput(formattedMessage);
+        });
+    } catch (err) {
+      const formattedMessage = err instanceof Error ? err.message.replace(/[{}"]/g, '').replace(/^error:/i, 'Error:\t') : 'Error desconocido';
+      setOutput(formattedMessage);
+    }
   }
 
   const handleOpenFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,87 +62,61 @@ export default function Home() {
     setCode('');
   }
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (fileMenuRef.current && !fileMenuRef.current.contains(event.target as Node)) {
-        setIsFileMenuOpen(false);
-      }
-      if (reportMenuRef.current && !reportMenuRef.current.contains(event.target as Node)) {
-        setIsReportMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   return (
     <div className='flex flex-col min-h-screen bg-gray-900 text-white'>
       {/* Barra superior */}
       <div className='bg-gray-800 p-2 flex justify-between items-center'>
         <div className='flex space-x-4'>
           {/* Menú Archivo */}
-          <div className='relative group' ref={fileMenuRef}>
-            <button
-              className='bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded w-40'
-              onClick={() => setIsFileMenuOpen(!isFileMenuOpen)}
-            >
+          <div className='relative group'>
+            <button className='bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded w-65'>
               Archivo
             </button>
-            {isFileMenuOpen && (
-              <div className='absolute bg-gray-700 mt-1 rounded z-50 w-40'>
-                <input
-                  type="file"
-                  id="file-input"
-                  className="hidden"
-                  accept=".glt"
-                  onChange={handleOpenFile}
-                />
-                <label
-                  htmlFor="file-input"
-                  className='block px-4 py-2 hover:bg-gray-600 cursor-pointer'
-                >
-                  Abrir Archivo
-                </label>
-                <button
-                  onClick={handleSaveFile}
-                  className='block w-full px-4 py-2 hover:bg-gray-600 text-left'
-                >
-                  Guardar Archivo
-                </button>
-                <button
-                  onClick={handleNewFile}
-                  className='block w-full px-4 py-2 hover:bg-gray-600 text-left'
-                >
-                  Crear Archivo
-                </button>
-              </div>
-            )}
+            <div className='absolute hidden group-hover:block bg-gray-700 mt-1 rounded z-50 w-65'>
+              <input
+                type="file"
+                id="file-input"
+                className="hidden"
+                accept=".glt"
+                onChange={handleOpenFile}
+              />
+              <label
+                htmlFor="file-input"
+                className='block px-4 py-2 hover:bg-gray-600 cursor-pointer'
+              >
+                Abrir Archivo
+              </label>
+              <button
+                onClick={handleSaveFile}
+                className='block w-full px-4 py-2 hover:bg-gray-600 text-left'
+              >
+                Guardar Archivo
+              </button>
+              <button
+                onClick={handleNewFile}
+                className='block w-full px-4 py-2 hover:bg-gray-600 text-left'
+              >
+                Crear Archivo
+              </button>
+            </div>
           </div>
 
           {/* Menú Reportes */}
-          <div className='relative group' ref={reportMenuRef}>
-            <button
-              className='bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded w-40'
-              onClick={() => setIsReportMenuOpen(!isReportMenuOpen)}
-            >
+          <div className='relative group'>
+            <button className='bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded w-65'>
               Reportes
             </button>
-            {isReportMenuOpen && (
-              <div className='absolute bg-gray-700 mt-1 rounded z-50 w-40'>
-                <button className='block w-full px-4 py-2 hover:bg-gray-600 text-left'>
-                  Reporte de Errores
-                </button>
-                <button className='block w-full px-4 py-2 hover:bg-gray-600 text-left'>
-                  Reporte de Tabla de Símbolos
-                </button>
-                <button className='block w-full px-4 py-2 hover:bg-gray-600 text-left'>
-                  Reporte de AST
-                </button>
-              </div>
-            )}
+            <div className='absolute hidden group-hover:block bg-gray-700 mt-1 rounded z-50 w-65'>
+              <button className='block w-full px-4 py-2 hover:bg-gray-600 text-left'>
+                Reporte de Errores
+              </button>
+              <button className='block w-full px-4 py-2 hover:bg-gray-600 text-left'>
+                Reporte de Tabla de Símbolos
+              </button>
+              <button className='block w-full px-4 py-2 hover:bg-gray-600 text-left'>
+                Reporte de AST
+              </button>
+            </div>
           </div>
         </div>
 
@@ -163,15 +134,13 @@ export default function Home() {
         {/* Editor */}
         <div className='flex-1 flex flex-col'>
           <label className='text-sm font-bold mb-2'>Editor:</label>
-          {isClient && ( // Renderiza el editor solo en el cliente
-            <Editor
-              height="70vh"
-              defaultLanguage="go"
-              theme='vs-dark'
-              value={code}
-              onChange={(value) => setCode(value || '')}
-            />
-          )}
+          <Editor
+            height="70vh"
+            defaultLanguage="go"
+            theme='vs-dark'
+            value={code}
+            onChange={(value) => setCode(value || '')}
+          />
         </div>
 
         {/* Consola */}

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Antlr4.Runtime;
 using analyzer;
+using Antlr4.Runtime.Misc;
 
 
 namespace api.Controllers
@@ -40,14 +41,48 @@ namespace api.Controllers
 
             var inputStream = new AntlrInputStream(request.Code);
             var lexer = new LanguageLexer(inputStream);
+
+            lexer.RemoveErrorListeners();
+            lexer.AddErrorListener(new LexicalErrorListener());
+
             var tokenStream = new CommonTokenStream(lexer);
             var parser = new LanguageParser(tokenStream);
-            var tree = parser.program();
 
-            var visitor = new CompilerVisitor();
-            visitor.Visit(tree);
+            parser.RemoveErrorListeners();
+            parser.AddErrorListener(new SyntaxErrorListener());
 
-            return Ok(new { result = visitor.output });
+            try 
+            {
+
+                var tree = parser.program();
+
+                var visitor = new CompilerVisitor();
+                visitor.Visit(tree);
+
+                return Ok(new { result = visitor.output });
+
+            }
+            catch (ParseCanceledException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (SemanticError ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (BreakException)
+            {
+                return BadRequest(new { error = "break statement outside loop" });
+            }
+            catch (ContinueException)
+            {
+                return BadRequest(new { error = "continue statement outside loop" });
+            }
+            catch (ReturnException)
+            {
+                return BadRequest(new { error = "return statement outside function" });
+            }
+
         }
 
     }

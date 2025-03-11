@@ -12,7 +12,8 @@ nonDcl: expressionStmt ';'
     | blockStmt
     | ifStatement 
     | whileStatement
-    //| forStatement #ForStatement
+    | forStatement 
+    | transferenceStmt
 ;
 
 blockStmt: '{' stmt* '}' #Block;
@@ -20,6 +21,15 @@ blockStmt: '{' stmt* '}' #Block;
 ifStatement: 'if' '(' expressionStmt ')' nonDcl ('else' nonDcl)? #IfStmt;
 
 whileStatement: 'while' '(' expressionStmt ')' nonDcl #WhileStmt;
+
+forStatement: 'for' '(' forInit expressionStmt ';' expressionStmt ')' nonDcl #ForStmt;
+
+forInit: (varDcl | expressionStmt) ';' ;
+
+transferenceStmt: 'break' ';' #BreakStmt
+    | 'continue' ';' #ContinueStmt
+    | 'return' expressionStmt? ';' #ReturnStmt
+;
 
 varDcl: 'var' ID ( '=' expressionStmt )? #variableDeclaration;
 

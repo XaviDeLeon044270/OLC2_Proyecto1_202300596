@@ -10,7 +10,7 @@ public class Environment
         this.parent = parent;
     }  
 
-    public ValueWrapper GetVariable(string id)
+    public ValueWrapper GetVariable(string id, Antlr4.Runtime.IToken token)
     {
         if (variables.ContainsKey(id))
         {
@@ -18,18 +18,18 @@ public class Environment
         }
         if (parent != null)
         {
-            return parent.GetVariable(id);
+            return parent.GetVariable(id, token);
         }
 
-        throw new Exception("Variable not found: " + id);
+        throw new SemanticError("Variable not found: " + id, token);
         
     }
 
-    public void DeclareVariable(string id, ValueWrapper value)
+    public void DeclareVariable(string id, ValueWrapper value, Antlr4.Runtime.IToken? token)
     {
         if (variables.ContainsKey(id))
         {
-            throw new Exception("Variable already declared: " + id);
+            if (token != null) throw new SemanticError("Variable already declared: " + id, token);
         }
         else
         {
@@ -37,7 +37,7 @@ public class Environment
         }
     }
 
-    public ValueWrapper AssignVariable(string id, ValueWrapper value)
+    public ValueWrapper AssignVariable(string id, ValueWrapper value, Antlr4.Runtime.IToken token)
     {
         if (variables.ContainsKey(id))
         {
@@ -47,10 +47,10 @@ public class Environment
 
         if (parent != null)
         {
-            return parent.AssignVariable(id, value);
+            return parent.AssignVariable(id, value, token);
         }
 
-        throw new Exception("Variable not found: " + id);
+        throw new SemanticError("Variable not found: " + id, token);
         
     }
 

@@ -23,7 +23,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         string id = context.ID().GetText();
         ValueWrapper value = Visit(context.expressionStmt());
 
-        actualEnvironment.DeclareVariable(id, value);
+        actualEnvironment.DeclareVariable(id, value, context.Start);
 
         return defaultValue;
     }
@@ -33,7 +33,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         string id = context.ID().GetText();
         ValueWrapper value = Visit(context.expressionStmt());
 
-        return actualEnvironment.AssignVariable(id, value);
+        return actualEnvironment.AssignVariable(id, value, context.Start);
 
     }
 
@@ -47,7 +47,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             BoolValue b => b.Value.ToString(),
             StringValue s => s.Value.Replace("\"", ""),
             VoidValue v => "void",
-            _ => throw new Exception("Invalid value")
+            _ => throw new SemanticError("Invalid value", context.Start)
         } + "\n";
         return defaultValue;
     }
@@ -56,7 +56,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
     {
         string id = context.ID().GetText();
 
-        return actualEnvironment.GetVariable(id);
+        return actualEnvironment.GetVariable(id, context.Start);
     }
 
     public override ValueWrapper VisitAddSub(LanguageParser.AddSubContext context)
@@ -71,7 +71,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             (IntValue l, IntValue r, "-") => new IntValue(l.Value - r.Value),
             (FloatValue l, FloatValue r, "+") => new FloatValue(l.Value + r.Value),
             (FloatValue l, FloatValue r, "-") => new FloatValue(l.Value - r.Value),
-            _ => throw new Exception("Invalid operation")
+            _ => throw new SemanticError("Invalid operation", context.Start)
         };
     }
 
@@ -91,7 +91,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             (FloatValue l, FloatValue r, "-") => new FloatValue(l.Value - r.Value),
             (FloatValue l, FloatValue r, "*") => new FloatValue(l.Value * r.Value),
             (FloatValue l, FloatValue r, "/") => new FloatValue(l.Value / r.Value),
-            _ => throw new Exception("Invalid operation")
+            _ => throw new SemanticError("Invalid operation", context.Start)
         };
         
     }
@@ -116,7 +116,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             (FloatValue l, FloatValue r, ">=") => new BoolValue(l.Value >= r.Value),
             (FloatValue l, FloatValue r, "==") => new BoolValue(l.Value == r.Value),
             (FloatValue l, FloatValue r, "!=") => new BoolValue(l.Value != r.Value),
-            _ => throw new Exception("Invalid operation")
+            _ => throw new SemanticError("Invalid operation", context.Start)
         };
     }
 
@@ -136,7 +136,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             (BoolValue l, BoolValue r, "!=") => new BoolValue(l.Value != r.Value),
             (StringValue l, StringValue r, "==") => new BoolValue(l.Value == r.Value),
             (StringValue l, StringValue r, "!=") => new BoolValue(l.Value != r.Value),
-            _ => throw new Exception("Invalid operation")
+            _ => throw new SemanticError("Invalid operation", context.Start)
         };
     }
 
@@ -157,7 +157,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         {
             IntValue i => new IntValue(-i.Value),
             FloatValue f => new FloatValue(-f.Value),
-            _ => throw new Exception("Invalid operation")
+            _ => throw new SemanticError("Invalid operation", context.Start)
         };
     }
 
@@ -197,7 +197,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         
         if (condition is not BoolValue)
         {
-            throw new Exception("Invalid condition");
+            throw new SemanticError("Invalid condition", context.Start);
         }
 
         if ((condition as BoolValue).Value)
@@ -218,7 +218,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         
         if (condition is not BoolValue)
         {
-            throw new Exception("Invalid condition");
+            throw new SemanticError("Invalid condition", context.Start);
         }
 
         while ((condition as BoolValue).Value)
@@ -228,6 +228,74 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         }
 
         return defaultValue;
+    }
+
+    public override ValueWrapper VisitForStmt(LanguageParser.ForStmtContext context)
+    {
+        Environment previousEnvironment = actualEnvironment;
+        actualEnvironment = new Environment(previousEnvironment);
+
+        Visit(context.forInit());
+
+        VisitForBody(context);  
+
+        actualEnvironment = previousEnvironment;
+        return defaultValue;
+    }
+
+    public void VisitForBody(LanguageParser.ForStmtContext context)
+    {
+        ValueWrapper condition = Visit(context.expressionStmt(0));
+
+        var previousEnvironment = actualEnvironment;
+
+        if (condition is not BoolValue)
+        {
+            throw new SemanticError("Invalid condition", context.Start);
+        }
+
+        try
+        {
+            while (condition is BoolValue boolCondition && boolCondition.Value)
+            {
+                Visit(context.nonDcl());
+                Visit(context.expressionStmt(1));
+                condition = Visit(context.expressionStmt(0));
+            }
+        } 
+        catch (BreakException)
+        {
+            actualEnvironment = previousEnvironment;
+        }
+        catch (ContinueException)
+        {
+            actualEnvironment = previousEnvironment;
+
+            Visit(context.expressionStmt(1));
+            VisitForBody(context);
+        }
+    }
+
+    public override ValueWrapper VisitBreakStmt(LanguageParser.BreakStmtContext context)
+    {
+        throw new BreakException();
+    }
+
+    public override ValueWrapper VisitContinueStmt(LanguageParser.ContinueStmtContext context)
+    {
+        throw new ContinueException();
+    }
+
+    public override ValueWrapper VisitReturnStmt(LanguageParser.ReturnStmtContext context)
+    {
+        ValueWrapper value = this.defaultValue;
+
+        if (context.expressionStmt() != null)
+        {
+            value = Visit(context.expressionStmt());
+        }
+
+        throw new ReturnException(value);
     }
 
 }
