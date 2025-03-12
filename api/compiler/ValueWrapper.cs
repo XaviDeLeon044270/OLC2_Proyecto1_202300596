@@ -10,3 +10,5 @@ public record StringValue(string Value) : ValueWrapper;
 
 public record VoidValue : ValueWrapper;
 
+public record FunctionValue(Invocable invocable, string name) : ValueWrapper;
+

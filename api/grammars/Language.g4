@@ -8,7 +8,6 @@ stmt: nonDcl
 ;
 
 nonDcl: expressionStmt ';'
-    | printStmt ';'
     | blockStmt
     | ifStatement 
     | whileStatement
@@ -35,6 +34,7 @@ varDcl: 'var' ID ( '=' expressionStmt )? #variableDeclaration;
 
 expressionStmt: 
     '-' expressionStmt                                          # Negate
+    | expressionStmt call+                                      # FunctionCall
     | expressionStmt ( '*' | '/' ) expressionStmt               # MulDiv
     | expressionStmt ( '+' | '-' ) expressionStmt               # AddSub
     | expressionStmt ( '>' | '<' | '>=' | '<=' ) expressionStmt # GreaterLess
@@ -48,7 +48,9 @@ expressionStmt:
     | '(' expressionStmt ')'                                    # Parens
 ;
 
-printStmt: 'print(' expressionStmt ')' #Print;
+call: '(' args? ')';
+
+args: expressionStmt ( ',' expressionStmt )*;
 
 INTEGER: [0-9]+;
 BOOLEAN: 'true' | 'false';

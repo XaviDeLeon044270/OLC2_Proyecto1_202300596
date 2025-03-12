@@ -1,12 +1,19 @@
 using analyzer;
 using Antlr4.Runtime.Misc;
 
-class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
+public class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
 {
 
-    private ValueWrapper defaultValue = new VoidValue();
+    public ValueWrapper defaultValue = new VoidValue();
     public string output = "";
-    private Environment actualEnvironment = new Environment(null);
+    public Environment actualEnvironment;
+
+    public CompilerVisitor()
+    {
+        actualEnvironment = new Environment(null);
+
+        Embeded.Generate(actualEnvironment);
+    }
 
     public override ValueWrapper VisitProgram(LanguageParser.ProgramContext context)
     {
@@ -37,7 +44,7 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
 
     }
 
-    public override ValueWrapper VisitPrint(LanguageParser.PrintContext context)
+/*    public override ValueWrapper VisitPrint(LanguageParser.PrintContext context)
     {
         ValueWrapper value = Visit(context.expressionStmt());
         output += value switch
@@ -47,11 +54,12 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
             BoolValue b => b.Value.ToString(),
             StringValue s => s.Value.Replace("\"", ""),
             VoidValue v => "void",
+            FunctionValue fn => "<function " + fn.name + ">",
             _ => throw new SemanticError("Invalid value", context.Start)
         } + "\n";
         return defaultValue;
     }
-
+*/
     public override ValueWrapper VisitIdentifier(LanguageParser.IdentifierContext context)
     {
         string id = context.ID().GetText();
@@ -220,13 +228,28 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         {
             throw new SemanticError("Invalid condition", context.Start);
         }
-
-        while ((condition as BoolValue).Value)
+    
+        try 
         {
-            Visit(context.nonDcl());
-            condition = Visit(context.expressionStmt());
+            while ((condition as BoolValue).Value)
+            {
+                try
+                {
+                    Visit(context.nonDcl());
+                }
+                catch (ContinueException)
+                {
+                    condition = Visit(context.expressionStmt());
+                    continue;
+                }
+                condition = Visit(context.expressionStmt());
+            }
         }
-
+        catch (BreakException)
+        {
+            return defaultValue;
+        }
+    
         return defaultValue;
     }
 
@@ -296,6 +319,47 @@ class CompilerVisitor : LanguageBaseVisitor<ValueWrapper>
         }
 
         throw new ReturnException(value);
+    }
+
+    public override ValueWrapper VisitFunctionCall(LanguageParser.FunctionCallContext context)
+    {
+        ValueWrapper function = Visit(context.expressionStmt());
+
+        foreach (var call in context.call())
+        {
+            if (function is FunctionValue functionValue)
+            {
+                function = VisitCall(functionValue.invocable, call.args());
+            }
+            else
+            {
+                throw new SemanticError("Invalid function call", context.Start);
+            }
+        }
+
+
+        return function;
+    }
+
+    public ValueWrapper VisitCall(Invocable invocable, LanguageParser.ArgsContext context)
+    {
+        List<ValueWrapper> args = new List<ValueWrapper>();
+
+        if (context != null)
+        {
+            foreach (var expression in context.expressionStmt())
+            {
+                args.Add(Visit(expression));
+            }
+        }
+
+        /*if (context != null && args.Count != invocable.Arity())
+        {
+            throw new SemanticError("Invalid number of arguments", context.Start);
+        }*/
+
+        return invocable.Invoke(args, this); 
+
     }
 
 }
