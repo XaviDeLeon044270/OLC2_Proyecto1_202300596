@@ -3,59 +3,91 @@ grammar Language;
 
 program: stmt*;
 
-stmt: nonDcl
-    | varDcl ';'
+stmt: nonDeclaration
+    | variableDeclaration
+    | functionDeclaration
+    | structDeclaration
 ;
 
-nonDcl: expressionStmt ';'
+nonDeclaration: expressionStmt ';'
     | blockStmt
-    | ifStatement 
+    | ifStatement
+    | switchStatement 
     | whileStatement
     | forStatement 
-    | transferenceStmt
+    | transferenceStmt ';'
+    | printStmt ';'
 ;
 
-blockStmt: '{' stmt* '}' #Block;
+printStmt: 'fmt.Println' '(' expressionStmt ( ',' expressionStmt )* ')';
 
-ifStatement: 'if' '(' expressionStmt ')' nonDcl ('else' nonDcl)? #IfStmt;
+blockStmt: '{' stmt* '}';
 
-whileStatement: 'while' '(' expressionStmt ')' nonDcl #WhileStmt;
+ifStatement: 'if' '(' expressionStmt ')' nonDeclaration ('else' nonDeclaration)?;
 
-forStatement: 'for' '(' forInit expressionStmt ';' expressionStmt ')' nonDcl #ForStmt;
+switchStatement: 'switch' expressionStmt '{' switchCase* defaultCase? '}';
 
-forInit: (varDcl | expressionStmt) ';' ;
+switchCase: 'case' expressionStmt ':' stmt*;
 
-transferenceStmt: 'break' ';' #BreakStmt
-    | 'continue' ';' #ContinueStmt
-    | 'return' expressionStmt? ';' #ReturnStmt
+defaultCase: 'default' ':' stmt*;
+
+whileStatement: 'for' expressionStmt nonDeclaration;
+
+forStatement: 'for' forInit expressionStmt ';' expressionStmt nonDeclaration;
+
+forInit: variableDeclaration | (expressionStmt ';') ;
+
+transferenceStmt: 'break' #BreakStmt
+    | 'continue' #ContinueStmt
+    | 'return' expressionStmt? #ReturnStmt
 ;
 
-varDcl: 'var' ID ( '=' expressionStmt )? #variableDeclaration;
+variableDeclaration: 'var' ID TYPE ( '=' expressionStmt )? ';'
+    | ID ':=' expressionStmt ';'
+;
+
+TYPE: 'int' | 'float64' | 'bool' | 'string' | 'rune';
+
+functionDeclaration: 'func' ID '(' params? ')' TYPE? blockStmt;
+
+params: ID ( ',' ID )*;
+
+structDeclaration: 'struct' ID '{' variableDeclaration* '}';
 
 expressionStmt: 
-    '-' expressionStmt                                          # Negate
-    | expressionStmt call+                                      # FunctionCall
-    | expressionStmt ( '*' | '/' ) expressionStmt               # MulDiv
+    ( '-' | '!' ) expressionStmt                                # Negate
+    | expressionStmt call+                                      # CallExpression
+    | expressionStmt ( '*' | '/' | '%') expressionStmt          # MulDivMod
     | expressionStmt ( '+' | '-' ) expressionStmt               # AddSub
     | expressionStmt ( '>' | '<' | '>=' | '<=' ) expressionStmt # GreaterLess
     | expressionStmt ( '==' | '!=' ) expressionStmt             # Equal
-    | ID '=' expressionStmt                                     # Assignment
+    | expressionStmt '&&' expressionStmt                        # And
+    | expressionStmt '||' expressionStmt                        # Or
+    | expressionStmt '=' expressionStmt                         # Assignment
+    | ID ( '+=' | '-=' ) expressionStmt                         # AddSubOperator
     | INTEGER                                                   # Integer
     | BOOLEAN                                                   # Boolean
     | FLOAT                                                     # Float
+    | RUNE                                                      # Rune
     | STRING                                                    # String
     | ID                                                        # Identifier
-    | '(' expressionStmt ')'                                    # Parens
+    | ID ID '=' '{' structAtribute* '}'                         # NewStruct
+    | (('(' expressionStmt ')') | ('[' expressionStmt ']'))     # Parens
 ;
 
-call: '(' args? ')';
+call: '(' args? ')'     #FunctionAccess
+    | '.' ID            #AtributeAccess
+;
 
 args: expressionStmt ( ',' expressionStmt )*;
+
+structAtribute: ID ':' expressionStmt ( ',' )?;
 
 INTEGER: [0-9]+;
 BOOLEAN: 'true' | 'false';
 FLOAT: [0-9]+ '.' [0-9]+;
-STRING: '"' ~'"'* '"';
+STRING: '"' ( '\\' . | ~[\\"\r\n] )* '"';
+RUNE: '\'' ( '\\' . | ~[\\"\r\n] ) '\'';
 ID: [a-zA-Z_][a-zA-Z_0-9]*;
 
 ONELINECOMMENT: '//' ~[\r\n]* -> skip;
